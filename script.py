@@ -77,17 +77,22 @@ class Edges:
             if edge['width'] > max_width:
                 max_width = edge['width']
 
+        max_width = max_width * 0.1
+
         for edge in self.edges:
             edge['width'] = edge['width'] / max_width
+            edge['label'] = '%.2f' % edge['width']
 
 
 if __name__ == '__main__':
     df = pd.read_csv('solutions.csv')
 
+    df = df[df['category'] == 7]
+
     if sys.argv[1] == 'edges':
         edges = Edges(df)
         print('var edges = new vis.DataSet(')
-        pprint(edges.edges[:1000])
+        pprint(edges.edges[:100])
         print(');')
     else:
         nodes = Nodes(df)
