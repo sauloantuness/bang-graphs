@@ -37,20 +37,18 @@ class Nodes:
 class Edges:
     def __init__(self, df):
         self.df = df.sort_values(['user', 'date'])
-        self.edges = self._get_edges()
+        self._compute_edges()
         self._normalize_edges()
+        self._kruskal()
 
-    def _get_edges(self):
-        previous_node = None
+    def _compute_edges(self):
         current_user = None
+        previous_node = None
         edges = {}
 
         for _, row in self.df.iterrows():
             if row.user != current_user:
                 current_user = row.user
-                previous_node = None
-
-            if not previous_node:
                 previous_node = row.problem
                 continue
 
@@ -68,7 +66,7 @@ class Edges:
 
             previous_node = row.problem
 
-        return [val for key, val in edges.items()]
+        self.edges = [val for key, val in edges.items()]
 
     def _normalize_edges(self):
         max_width = 0
@@ -83,6 +81,30 @@ class Edges:
             edge['width'] = edge['width'] / max_width
             edge['label'] = '%.2f' % edge['width']
 
+    def _kruskal(self):
+        problems = []
+        edges = sorted(self.edges, key=lambda k: k['width'], reverse=True) 
+
+        selected_nodes = {}
+        selected_edges = []
+
+        for edge in edges:
+            add_node = False
+
+            if not selected_nodes.get(edge['from']):
+                selected_nodes[edge['from']] = True
+                add_node = True
+
+            if not selected_nodes.get(edge['to']):
+                add_node = True
+                selected_nodes[edge['to']] = True
+
+            if add_node:
+                selected_edges.append(edge)
+
+
+        self.edges = selected_edges
+
 
 if __name__ == '__main__':
     df = pd.read_csv('solutions.csv')
@@ -92,7 +114,7 @@ if __name__ == '__main__':
     if sys.argv[1] == 'edges':
         edges = Edges(df)
         print('var edges = new vis.DataSet(')
-        pprint(edges.edges[:100])
+        pprint(edges.edges)
         print(');')
     else:
         nodes = Nodes(df)
